@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flip Game</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>🃏 Flip Card Game</h1>
+<div id="stats">⏱ <span id="t">0</span>s | 🔄 <span id="m">0</span> | 🏆 <span id="b">--</span></div>
+<select id="d">
+  <option value="easy">Easy</option>
+  <option value="medium" selected>Medium</option>
+  <option value="hard">Hard</option>
+</select>
+<button onclick="start()">Start</button>
+
+<div class="game-area">
+  <div id="board" class="game-board"></div>
+  <div id="matchedBox"><b>✅ Matched Pile</b></div>
+</div>
+
+<div id="msg"></div>
+
+<script>
+const sym=["🍎","🍌","🍇","🍊","🍓","🍒","🥝","🍉","🍍","🥥","🥑","🍆","🥕","🌽","🍄","🥦"];
+let set=[],flip=[],match=[],moves=0,time=0,int=null;
+function shuf(a){return a.sort(()=>Math.random()-.5)}
+
+function make(l){
+  board.innerHTML=""; matchedBox.innerHTML="<b>✅ Matched Pile</b>";
+  let r=l=="easy"?2:l=="medium"?4:4, c=l=="easy"?4:l=="medium"?4:6;
+  board.style.gridTemplateColumns=`repeat(${c},80px)`;
+  set=shuf([...sym].slice(0,(r*c)/2)); set=shuf([...set,...set]);
+  set.forEach(s=>{
+    let d=document.createElement("div");
+    d.className="card";
+    d.innerHTML=`<div class="inner"><div class="front">${s}</div><div class="back">❓</div></div>`;
+    d.dataset.s=s; d.onclick=flipCard; board.appendChild(d);
+  })
+}
+
+function flipCard(){
+  if(!int)int=setInterval(()=>{t.textContent=++time},1000);
+  if(flip.length<2&&!this.classList.contains("flipped")&&!this.classList.contains("matched")){
+    this.classList.add("flipped"); flip.push(this);
+    if(flip.length==2){m.textContent=++moves; chk();}
+  }
+}
+
+function chk(){
+  let[a,b]=flip;
+  if(a.dataset.s==b.dataset.s){
+    a.classList.add("matched"); b.classList.add("matched");
+    setTimeout(()=>{
+      a.remove(); b.remove();
+      let pile=document.createElement("div");
+      pile.style.fontSize="30px"; pile.textContent=a.dataset.s+" "+b.dataset.s;
+      matchedBox.appendChild(pile);
+    },500);
+    match.push(a,b); flip=[];
+    if(match.length==set.length){ clearInterval(int); save(); }
+  } else {
+    setTimeout(()=>{a.classList.remove("flipped"); b.classList.remove("flipped"); flip=[]},700);
+  }
+}
+
+function save(){
+  let s=`${moves} moves in ${time}s`;
+  let best=localStorage.best;
+  if(!best||moves<parseInt(best))localStorage.best=s;
+  b.textContent=localStorage.best||"--";
+  msg.textContent=`🎉 You won in ${s}!`;
+}
+
+function start(){
+  flip=[]; match=[]; moves=0; time=0; clearInterval(int); int=null;
+  m.textContent=0; t.textContent=0; msg.textContent="";
+  make(d.value); b.textContent=localStorage.best||"--";
+}
+start();
+</script>
+</body>
+</html>
